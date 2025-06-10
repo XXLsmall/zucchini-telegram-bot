@@ -466,27 +466,24 @@ async def handle_donation(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # === Background Lottery Thread ===
 async def lottery_draw_loop():
-    """Background lottery system — executes every 6 hours"""
     while True:
         try:
-            time.sleep(30)  # Check every minute
+            await asyncio.sleep(5)  # Check every 5 seconds
+            current_time = now()
 
             with data_lock:
-                current_time = now()
-                if current_time < data['lottery']['end_time']:
+                end_time = data['lottery'].get('end_time', 0)
+                if current_time < end_time:
                     continue
 
-                # Copy bets for processing
                 bets = data['lottery']['bets'].copy()
+                data['lottery']['end_time'] = current_time + LOTTERY_INTERVAL
 
             if not bets:
-                with data_lock:
-                    data['lottery']['end_time'] = current_time + LOTTERY_INTERVAL
-                save_data()
                 logger.info("Nessuna scommessa attiva. Nuovo round iniziato.")
                 continue
 
-            # === Perform Lottery Draw ===
+            # Draw time!
             winning_number = random.randint(1, 10)
             logger.info(f"Numero estratto: {winning_number}")
 
@@ -497,61 +494,51 @@ async def lottery_draw_loop():
             total_pot = sum(b['amount'] for b in bets.values())
             total_winning = sum(b['amount'] for b in winning_bets.values())
 
-            with data_lock:
-                if winning_bets:
-                    for uid, b in winning_bets.items():
-                        share = int(total_pot * (b['amount'] / total_winning))
-                        get_user(uid)['length'] += share
-                        logger.info(f"Utente {uid} ha vinto {share}cm")
-                else:
-                    for uid, b in bets.items():
-                        get_user(uid)['length'] += b['amount']
-                        logger.info(f"Nessun vincitore. Rimborsati {b['amount']}cm a {uid}")
+            group_id = data['lottery'].get('group_chat_id')
+            message = f"🎯 Numero estratto: {winning_number}\n\n"
 
+            if winning_bets:
                 winners = []
                 losers = []
+                with data_lock:
+                    for uid, b in bets.items():
+                        user = get_user(uid)
+                        name = user.get('username', f'user_{uid}')
 
-                for uid, b in bets.items():
-                    user = get_user(uid)
-                    name = user.get("username", f"user_{uid}")
-                    if uid in winning_bets:
-                        amount = int(total_pot * (b['amount'] / total_winning))
-                        winners.append(f"- @{name} ha vinto {amount}cm")
-                    else:
-                        amount = b['amount']
-                        losers.append(f"- @{name} ha perso {amount}cm")
+                        if uid in winning_bets:
+                            share = int(total_pot * (b['amount'] / total_winning))
+                            user['length'] += share
+                            user['stats']['length_won'] += share
+                            winners.append(f"- @{name} ha vinto {share}cm")
+                        else:
+                            user['stats']['length_lost'] += b['amount']
+                            losers.append(f"- @{name} ha perso {b['amount']}cm")
 
-                msg = f"🎯 Numero estratto: {winning_number}\n\n"
+                    data['lottery']['bets'] = {}
+                    data['lottery']['history'].append(winning_number)
+                    data['lottery']['history'] = data['lottery']['history'][-5:]
 
-                if winners:
-                    msg += "🏆 Vincitori:\n" + "\n".join(winners) + "\n\n"
-                else:
-                    msg += "😢 Nessun vincitore questa volta.\n\n"
+                message += "🏆 Vincitori:\n" + "\n".join(winners) + "\n\n"
+                message += "❌ Perdenti:\n" + "\n".join(losers)
 
-                if losers:
-                    msg += "❌ Perdenti:\n" + "\n".join(losers)
-
-                # Send to group
-                group_id = data['lottery'].get('group_chat_id')
-                if group_id:
-                    await application.bot.send_message(chat_id=group_id, text=msg)
-                else:
-                    logger.warning("Group chat ID non trovato per l'annuncio della lotteria.")
-
-
-
-                # Update lottery state
-                data['lottery']['history'].append(winning_number)
-                data['lottery']['history'] = data['lottery']['history'][-5:]
-                data['lottery']['bets'] = {}
-                data['lottery']['end_time'] = current_time + LOTTERY_INTERVAL
+            else:
+                with data_lock:
+                    for uid, b in bets.items():
+                        user = get_user(uid)
+                        user['length'] += b['amount']  # Refund
+                    message += "😢 Nessun vincitore. Puntate rimborsate."
 
             save_data()
-            logger.info("Lotteria conclusa. Nuovo round iniziato.")
+
+            if group_id:
+                await application.bot.send_message(chat_id=group_id, text=message)
+            else:
+                logger.warning("Group chat ID non definito — messaggio non inviato.")
 
         except Exception as e:
             logger.error(f"Errore nel ciclo lotteria: {e}")
-            time.sleep(300)
+            await asyncio.sleep(10)
+
 
 # === Error Handler ===
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
