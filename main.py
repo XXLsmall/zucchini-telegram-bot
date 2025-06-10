@@ -83,6 +83,8 @@ def get_user(user_id):
             "last_daily": 0,
             "last_beg": 0,
             "stats": {
+                "daily_used": 0
+                "beg_used": 0
                 "daily_collected": 0,
                 "begs": 0,
                 "length_won": 0,
