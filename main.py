@@ -1,6 +1,5 @@
 # Zucchini Telegram Bot Core
 # Fixed version with working commands and no group restrictions
-raise Exception("Force stop bot instance")
 
 import logging
 import random
@@ -509,6 +508,7 @@ async def lottery_draw_loop(app):
 
             group_id = FIXED_GROUP_CHAT_ID
             message = f"🎯 Numero estratto: {winning_number}\n\n"
+            #raise Exception("Force stop bot instance")
 
             logger.info(f"Arrivo anche qua")
 
