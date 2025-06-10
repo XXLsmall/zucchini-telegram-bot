@@ -1,5 +1,6 @@
 # Zucchini Telegram Bot Core
 # Fixed version with working commands and no group restrictions
+raise Exception("Force stop bot instance")
 
 import logging
 import random
