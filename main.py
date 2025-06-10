@@ -559,14 +559,17 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Update {update} caused error {context.error}")
 
 # === Bot Setup ===
-async def main():
+def main():
     """Main function to run the bot"""
-    # Start lottery thread
-    asyncio.create_task(lottery_draw_loop())
-    await app.run_polling()
     
     # Build application
     app = ApplicationBuilder().token(TOKEN).build()
+
+    # Start lottery thread
+    loop = asyncio.get_event_loop()
+    loop.create_task(lottery_draw_loop())
+
+    app.run_polling()
     
     # Add handlers - REMOVED GROUP FILTERS
     app.add_handler(CommandHandler('start', start))
@@ -590,4 +593,4 @@ async def main():
     logger.info("Bot started successfully")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
