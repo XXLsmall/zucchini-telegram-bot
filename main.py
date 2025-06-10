@@ -564,7 +564,6 @@ def main():
     # Build application
     app = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
 
-    group_id = data['lottery'].get('group_chat_id')
     logger.info(f"Stored group_chat_id: {group_id}")
     
     # Add handlers - REMOVED GROUP FILTERS
