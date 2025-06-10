@@ -564,6 +564,7 @@ def main():
     # Build application
     app = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
 
+    group_id = FIXED_GROUP_CHAT_ID
     logger.info(f"Stored group_chat_id: {group_id}")
     
     # Add handlers - REMOVED GROUP FILTERS
