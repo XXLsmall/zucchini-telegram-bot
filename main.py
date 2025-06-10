@@ -109,9 +109,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command handler"""
     user = get_user(update.effective_user.id)
     if update.effective_chat.type in ["group", "supergroup"]:
-        data['lottery']['group_chat_id'] = update.effective_chat.id
+        group_id = update.effective_chat.id
+        logger.info(f"GRUPPO REGISTRATO: chat_id = {group_id}")
+        data['lottery']['group_chat_id'] = group_id
         save_data()
-    save_data()
+
 
     logger.info(f"Group ID: {group_id}")
     logger.info(f"Message length: {len(message)}")
@@ -557,7 +559,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def post_init(app):
-    asyncio.create_task(lottery_draw_loop())
+    #asyncio.create_task(lottery_draw_loop())
     logger.info("Background lottery loop started.")
 
 # === Bot Setup ===
@@ -566,6 +568,9 @@ def main():
     
     # Build application
     app = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
+
+    group_id = data['lottery'].get('group_chat_id')
+    logger.info(f"Stored group_chat_id: {group_id}")
     
     # Add handlers - REMOVED GROUP FILTERS
     app.add_handler(CommandHandler('start', start))
