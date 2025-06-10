@@ -20,6 +20,7 @@ load_dotenv()
 # === Configurations ===
 TOKEN = os.getenv('BOT_TOKEN')
 FIXED_GROUP_CHAT_ID = -4951349977
+group_id = FIXED_GROUP_CHAT_ID
 if not TOKEN:
     raise ValueError("BOT_TOKEN environment variable is required")
 
