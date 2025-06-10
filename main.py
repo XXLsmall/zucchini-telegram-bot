@@ -514,15 +514,17 @@ async def lottery_draw_loop(app):
                     for uid, b in bets.items():
                         user = get_user(uid)
                         name = user.get('username', f'user_{uid}')
-
+                        logger.info(f"Qua si")
                         if uid in winning_bets:
                             share = int(total_pot * (b['amount'] / total_winning))
                             user['length'] += share
                             user['stats']['length_won'] += share
                             winners.append(f"- @{name} ha vinto {share}cm")
+                            logger.info(f"Qua pure")
                         else:
                             user['stats']['length_lost'] += b['amount']
                             losers.append(f"- @{name} ha perso {b['amount']}cm")
+                            logger.info(f"Qua anche")
 
                     data['lottery']['bets'] = {}
                     data['lottery']['history'].append(winning_number)
@@ -530,6 +532,8 @@ async def lottery_draw_loop(app):
 
                 message += "🏆 Vincitori:\n" + "\n".join(winners) + "\n\n"
                 message += "❌ Perdenti:\n" + "\n".join(losers)
+
+                logger.info(f"E anche qua")
 
             else:
                 with data_lock:
