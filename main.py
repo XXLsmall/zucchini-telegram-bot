@@ -112,6 +112,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data['lottery']['group_chat_id'] = update.effective_chat.id
         save_data()
     save_data()
+
+    logger.info(f"Group ID: {group_id}")
+    logger.info(f"Message length: {len(message)}")
+    logger.debug(f"Message content:\n{message}")
     
     await update.message.reply_text(
         f"Benvenuto al bot della ludopatia! 🎰\n"
@@ -530,9 +534,13 @@ async def lottery_draw_loop():
                     message += "😢 Nessun vincitore. Puntate rimborsate."
 
             save_data()
-
+            logger.info("Inizio invio messaggio estrazione lotteria")
             if group_id:
-                await application.bot.send_message(chat_id=group_id, text=message)
+                try:
+                    await application.bot.send_message(chat_id=group_id, text=message)
+                    logger.info("Messaggio lotteria inviato con successo")
+                except Exception as e:
+                    logger.error(f"Errore durante invio messaggio: {e}")
             else:
                 logger.warning("Group chat ID non definito — messaggio non inviato.")
 
