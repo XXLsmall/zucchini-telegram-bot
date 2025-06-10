@@ -20,7 +20,6 @@ load_dotenv()
 # === Configurations ===
 TOKEN = os.getenv('BOT_TOKEN')
 FIXED_GROUP_CHAT_ID = -4951349977
-group_id = FIXED_GROUP_CHAT_ID
 if not TOKEN:
     raise ValueError("BOT_TOKEN environment variable is required")
 
@@ -471,6 +470,7 @@ async def handle_donation(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # === Background Lottery Thread ===
 async def lottery_draw_loop(app):
     logger.info("lottery_draw_loop is running")
+    group_id = FIXED_GROUP_CHAT_ID
     while True:
         try:
             await asyncio.sleep(5)  # Check every 5 seconds
