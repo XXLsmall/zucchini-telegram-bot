@@ -108,8 +108,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command handler"""
     user = get_user(update.effective_user.id)
     if update.effective_chat.type in ["group", "supergroup"]:
-    data['lottery']['group_chat_id'] = update.effective_chat.id
-    save_data()
+        data['lottery']['group_chat_id'] = update.effective_chat.id
+        save_data()
     save_data()
     
     await update.message.reply_text(
