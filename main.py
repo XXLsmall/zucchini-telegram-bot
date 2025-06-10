@@ -558,13 +558,14 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Log errors"""
     logger.error(f"Update {update} caused error {context.error}")
 
+
+async def post_init(app):
+    asyncio.create_task(lottery_draw_loop())
+    logger.info("Background lottery loop started.")
+
 # === Bot Setup ===
 def main():
     """Main function to run the bot"""
-    # Start lottery thread
-    lottery_thread = threading.Thread(target=lottery_draw_loop, daemon=True)
-    lottery_thread.start()
-    asyncio.create_task(lottery_draw_loop())
     
     # Build application
     app = ApplicationBuilder().token(TOKEN).build()
