@@ -559,12 +559,13 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Update {update} caused error {context.error}")
 
 # === Bot Setup ===
-def main():
+async def main():
     """Main function to run the bot"""
     # Start lottery thread
     lottery_thread = threading.Thread(target=lottery_draw_loop, daemon=True)
     lottery_thread.start()
     asyncio.create_task(lottery_draw_loop())
+    await app.run_polling()
     
     # Build application
     app = ApplicationBuilder().token(TOKEN).build()
@@ -589,7 +590,6 @@ def main():
     app.add_error_handler(error_handler)
     
     logger.info("Bot started successfully")
-    app.run_polling()
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    asyncio.run(main())
