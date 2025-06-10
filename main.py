@@ -562,8 +562,6 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     """Main function to run the bot"""
     # Start lottery thread
-    lottery_thread = threading.Thread(target=lottery_draw_loop, daemon=True)
-    lottery_thread.start()
     asyncio.create_task(lottery_draw_loop())
     await app.run_polling()
     
