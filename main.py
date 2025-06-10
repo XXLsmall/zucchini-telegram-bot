@@ -77,21 +77,20 @@ def save_data():
 
 def get_user(user_id):
     user_id = str(user_id)
-    with data_lock:
-        if user_id not in data['users']:
-            data['users'][user_id] = {
-                'length': 10,  # Starting length
-                'last_daily': 0,
-                'last_hourly': 0,
-                'stats': {
-                    'daily_used': 0,
-                    'hourly_used': 0,
-                    'bet_total': 0,
-                    'won': 0,
-                    'lost': 0
-                }
-            }
+    if user_id not in data['users']:
+        data['users'][user_id] = {
+            "length": 20,
+            "last_daily": 0,
+            "last_beg": 0,
+            "stats": {
+                "daily_collected": 0,
+                "begs": 0,
+                "length_won": 0,
+                "length_lost": 0,
+            },
+        }
     return data['users'][user_id]
+
 
 def now():
     return time.time()
@@ -540,15 +539,22 @@ async def lottery_draw_loop(app):
                 with data_lock:
                     for uid, b in bets.items():
                         logger.info(f"Rimborsando utente {uid} con {b['amount']}cm")
+            
                         user = get_user(uid)
-                        if not user:
-                            logger.warning(f"Utente {uid} non trovato!")
+                        if not isinstance(user, dict):
+                            logger.warning(f"Utente {uid} è None o malformato: {user}")
                             continue
-                        user['length'] += b['amount']
-                        logger.info(f"Nuova lunghezza per utente {uid}: {user['length']}")
+
+                        try:
+                            amount = int(b.get('amount', 0))
+                            user['length'] += amount
+                            logger.info(f"Nuova lunghezza per utente {uid}: {user['length']}")
+                        except Exception as e:
+                            logger.exception(f"Errore nel rimborso per utente {uid}")
 
                     message += "😢 Nessun vincitore. Puntate rimborsate."
                     logger.info("Rimborso completato")
+
 
 
             save_data()
