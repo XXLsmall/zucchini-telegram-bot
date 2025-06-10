@@ -499,8 +499,13 @@ async def lottery_draw_loop(app):
             total_pot = sum(b['amount'] for b in bets.values())
             total_winning = sum(b['amount'] for b in winning_bets.values())
 
+            logger.info(f"Inviando messaggio al gruppo {group_id}")
+            logger.info(f"Inviando messaggio al gruppo {total_pot}")
+
             group_id = FIXED_GROUP_CHAT_ID
             message = f"🎯 Numero estratto: {winning_number}\n\n"
+
+            logger.info(f"Arrivo anche qua")
 
             if winning_bets:
                 winners = []
@@ -537,12 +542,14 @@ async def lottery_draw_loop(app):
             logger.info("Inizio invio messaggio estrazione lotteria")
             if group_id:
                 try:
+                    logger.info(f"Inviando messaggio al gruppo {group_id}")
                     await application.bot.send_message(chat_id=group_id, text=message)
-                    logger.info("Messaggio lotteria inviato con successo")
+                    logger.info("✅ Messaggio lotteria inviato con successo")
                 except Exception as e:
-                    logger.error(f"Errore durante invio messaggio: {e}")
+                    logger.exception("❌ Errore durante invio messaggio lotteria")
             else:
-                logger.warning("Group chat ID non definito — messaggio non inviato.")
+                logger.warning("⚠️ Group chat ID non definito — messaggio non inviato.")
+
 
         except Exception as e:
             logger.error(f"Errore nel ciclo lotteria: {e}")
