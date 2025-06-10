@@ -466,6 +466,7 @@ async def handle_donation(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # === Background Lottery Thread ===
 async def lottery_draw_loop():
+    logger.info("lottery_draw_loop is running")
     while True:
         try:
             await asyncio.sleep(5)  # Check every 5 seconds
@@ -537,6 +538,7 @@ async def lottery_draw_loop():
 
         except Exception as e:
             logger.error(f"Errore nel ciclo lotteria: {e}")
+            logger.info(f"Errore nel ciclo lotteria: {e}")
             await asyncio.sleep(10)
 
 
@@ -555,7 +557,7 @@ def main():
     """Main function to run the bot"""
     
     # Build application
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
     
     # Add handlers - REMOVED GROUP FILTERS
     app.add_handler(CommandHandler('start', start))
