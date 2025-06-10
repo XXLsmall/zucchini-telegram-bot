@@ -562,7 +562,7 @@ async def lottery_draw_loop(app):
             if group_id:
                 try:
                     logger.info(f"Inviando messaggio al gruppo {group_id}")
-                    await application.bot.send_message(chat_id=group_id, text=message)
+                    await app.bot.send_message(chat_id=group_id, text=message)
                     logger.info("✅ Messaggio lotteria inviato con successo")
                 except Exception as e:
                     logger.exception("❌ Errore durante invio messaggio lotteria")
