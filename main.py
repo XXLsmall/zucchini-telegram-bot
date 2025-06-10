@@ -541,6 +541,7 @@ async def lottery_draw_loop(app):
                         user = get_user(uid)
                         user['length'] += b['amount']  # Refund
                     message += "😢 Nessun vincitore. Puntate rimborsate."
+                    logger.info(f"Qua perché nessuno ha vinto")
 
             save_data()
             logger.info("Inizio invio messaggio estrazione lotteria")
