@@ -8,6 +8,7 @@ import threading
 import json
 import os
 import asyncio
+import traceback
 from collections import defaultdict
 from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
@@ -554,6 +555,7 @@ async def lottery_draw_loop(app):
 
                     message += "😢 Nessun vincitore. Puntate rimborsate."
                     logger.info("Rimborso completato")
+                    data['lottery']['bets'] = {}
 
 
 
@@ -571,8 +573,7 @@ async def lottery_draw_loop(app):
 
 
         except Exception as e:
-            logger.error(f"Errore nel ciclo lotteria: {e}")
-            logger.info(f"Errore nel ciclo lotteria: {e}")
+            logger.error("Errore nel ciclo lotteria:\n" + traceback.format_exc())
             await asyncio.sleep(10)
 
 
