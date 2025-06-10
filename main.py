@@ -283,7 +283,8 @@ async def superenalotto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         remaining_sec = int(data['lottery']['end_time'] - now())
         hours = remaining_sec // 3600
         minutes = (remaining_sec % 3600) // 60
-        msg += f"\n⏰ Prossima estrazione tra: {hours} ore {minutes} minuti"
+        seconds = remaining_sec % 60
+        msg += f"\n⏰ Prossima estrazione tra: {hours}h {minutes}m {seconds}s"
 
     await update.message.reply_text(msg)
 
@@ -562,6 +563,7 @@ def main():
     # Start lottery thread
     lottery_thread = threading.Thread(target=lottery_draw_loop, daemon=True)
     lottery_thread.start()
+    asyncio.create_task(lottery_draw_loop())
     
     # Build application
     app = ApplicationBuilder().token(TOKEN).build()
