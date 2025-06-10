@@ -14,13 +14,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 from dotenv import load_dotenv
 
-from telegram.error import NetworkError
-
-try:
-    app.run_polling()
-except NetworkError as e:
-    logger.error("Possibly already running elsewhere")
-    raise
 
 # Load environment variables
 load_dotenv()
