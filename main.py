@@ -110,10 +110,12 @@ def get_username(user):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command handler"""
     user = get_user(update.effective_user.id)
+    chat_id = update.effective_chat.id
+    msg_text = update.message.text
 
-    logger.info(f"Group ID: {group_id}")
-    logger.info(f"Message length: {len(message)}")
-    logger.debug(f"Message content:\n{message}")
+    logger.info(f"Group ID: {chat_id}")
+    logger.info(f"Message length: {len(msg_text)}")
+    logger.debug(f"Message content:\n{msg_text}")
     
     await update.message.reply_text(
         f"Benvenuto al bot della ludopatia! 🎰\n"
