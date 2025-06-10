@@ -14,6 +14,14 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 from dotenv import load_dotenv
 
+from telegram.error import NetworkError
+
+try:
+    app.run_polling()
+except NetworkError as e:
+    logger.error("Possibly already running elsewhere")
+    raise
+
 # Load environment variables
 load_dotenv()
 
@@ -83,8 +91,8 @@ def get_user(user_id):
             "last_daily": 0,
             "last_beg": 0,
             "stats": {
-                "daily_used": 0
-                "beg_used": 0
+                "daily_used": 0,
+                "beg_used": 0,
                 "daily_collected": 0,
                 "begs": 0,
                 "length_won": 0,
