@@ -213,60 +213,29 @@ async def elemosina(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def coinflip(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Coinflip betting command"""
     user = get_user(update.effective_user.id)
-    
-    if not context.args:
-        await update.message.reply_text(
-            "Uso: /coinflip [puntata]\n"
-            f"La tua zucchina attuale: {user['length']}cm"
-        )
-        return
-    
-    try:
-        bet = int(context.args[0])
-    except ValueError:
-        await update.message.reply_text("La puntata deve essere un numero!")
-        return
-    
-    if bet <= 0:
-        await update.message.reply_text("La puntata deve essere maggiore di 0!")
-        return
-    
-    if bet > user['length']:
-        await update.message.reply_text(
-            f"Non hai abbastanza cm! Hai: {user['length']}cm, vuoi scommettere: {bet}cm"
-        )
-        return
-    
-    # Coinflip logic
-    result = random.choice(['testa', 'croce'])
-    win = random.random() < 0.5  # 50% chance to win
-    
-    user['length'] -= bet
+    user_id = str(update.effective_user.id)
 
-    if win:
-        user['length'] += bet * 2  # Return double (net gain of bet)
-        user['stats']['won'] += 1
-        await update.message.reply_text(
-            f"🪙 TESTA O CROCE 🪙\n"
-            f"Risultato: {result.upper()}\n"
-            f"HAI VINTO! 🎉\n"
-            f"Guadagno: +{bet}cm\n"
-            f"Zucchina attuale: {user['length']}cm"
-        )
-    else:
-        user['stats']['lost'] += 1
-        await update.message.reply_text(
-            f"🪙 TESTA O CROCE 🪙\n"
-            f"Risultato: {result.upper()}\n"
-            f"Hai perso... 😔\n"
-            f"Perdita: -{bet}cm\n"
-            f"Zucchina attuale: {user['length']}cm"
-        )
-    
-    user['stats']['bet_total'] += bet
+    if not context.args or not context.args[0].isdigit():
+        await update.message.reply_text("Uso: /coinflip [puntata in cm]")
+        return
+
+    bet = int(context.args[0])
+    if bet <= 0 or bet > user['length']:
+        await update.message.reply_text(f"Puntata non valida. Hai {user['length']}cm.")
+        return
+
+    data['duels'][user_id] = {'bet': bet, 'type': 'coinflip'}
     save_data()
+
+    keyboard = [
+        [InlineKeyboardButton("🪓 Martello", callback_data=f"coinflip:{user_id}:martello")],
+        [InlineKeyboardButton("🔨 Falce", callback_data=f"coinflip:{user_id}:falce")]
+    ]
+    await update.message.reply_text(
+        f"Stai per giocare al coinflip con una puntata di {bet}cm!\nScegli un lato:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 async def duello_pisello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args or not context.args[0].isdigit():
@@ -281,7 +250,6 @@ async def duello_pisello(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Puntata non valida. Hai {user['length']}cm.")
         return
 
-    user['length'] -= bet
     data['duels'][user_id] = {'bet': bet}
     save_data()
 
@@ -294,20 +262,26 @@ async def duello_pisello(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def superenalotto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    msg = "📊 SCOMMESSE ATTUALI 📊\n"
+    msg = "📊 SCOMMESSE ATTUALI 📊\n\n"
 
-    totals = {n: [] for n in range(1, 11)}
     with data_lock:
+        active_bets = {}
         for uid, b in data['lottery']['bets'].items():
-            totals[b['number']].append((uid, b['amount']))
+            num = b['number']
+            active_bets.setdefault(num, []).append((uid, b['amount']))
 
-    for num in range(1, 11):
-        total = sum(a for _, a in totals[num])
-        msg += f"{num}: {total}cm da {len(totals[num])} utenti\n"
+        for num, entries in active_bets.items():
+            total = sum(a for _, a in entries)
+            msg += f"{num}: {total}cm da {len(entries)} utenti\n"
 
-    if user_id in data['lottery']['bets']:
-        own = data['lottery']['bets'][user_id]
-        msg += f"\n🎯 Tua puntata: {own['amount']}cm sul numero {own['number']}"
+        if user_id in data['lottery']['bets']:
+            own = data['lottery']['bets'][user_id]
+            msg += f"\n🎯 Tua puntata: {own['amount']}cm sul numero {own['number']}"
+
+        remaining_sec = int(data['lottery']['end_time'] - now())
+        hours = remaining_sec // 3600
+        minutes = (remaining_sec % 3600) // 60
+        msg += f"\n⏰ Prossima estrazione tra: {hours}h {minutes}m"
 
     await update.message.reply_text(msg)
 
@@ -347,34 +321,16 @@ async def schedina(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def tessera_del_pane(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Free bread command"""
     user = get_user(update.effective_user.id)
-    current_time = now()
-    
-    # Check if user already got bread today
-    last_bread = user.get('last_bread', 0)
-    if current_time - last_bread < 24 * 60 * 60:
-        remaining = 24 * 60 * 60 - (current_time - last_bread)
-        hours = int(remaining // 3600)
-        minutes = int((remaining % 3600) // 60)
-        await update.message.reply_text(
-            f"Hai già ritirato il pane oggi! 🍞\n"
-            f"Prossimo ritiro tra: {hours}h {minutes}m"
-        )
-        return
-    
-    # Give free bread (small amount)
-    bonus = random.randint(1, 3)
-    user['length'] += bonus
-    user['last_bread'] = current_time
-    save_data()
-    
+    daily = user['stats'].get('daily_used', 0)
+    hourly = user['stats'].get('hourly_used', 0)
+
     await update.message.reply_text(
-        f"Hai ritirato il pane gratuito! 🍞\n"
-        f"Guadagno: +{bonus}cm\n"
-        f"Zucchina attuale: {user['length']}cm\n"
-        f"Torna domani per altro pane gratuito!"
+        f"📈 Tessera del Pane 📈\n"
+        f"Razioni giornaliere ottenute: {daily} volte\n"
+        f"Elemosine ricevute: {hourly} volte"
     )
+
 
 async def grazie_mosca(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Thank you command"""
@@ -394,6 +350,53 @@ async def grazie_mosca(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "Prego! La cortesia è sempre apprezzata! 🙏"
         )
+
+async def handle_coinflip_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    try:
+        _, user_id, choice = query.data.split(":")
+        actor_id = str(query.from_user.id)
+
+        if actor_id != user_id:
+            await query.edit_message_text("Non puoi giocare il coinflip di un altro utente!")
+            return
+
+        bet_data = data['duels'].get(user_id)
+        if not bet_data or bet_data.get('type') != 'coinflip':
+            await query.edit_message_text("Coinflip non valido o già completato.")
+            return
+
+        user = get_user(user_id)
+        bet = bet_data['bet']
+
+        if user['length'] < bet:
+            await query.edit_message_text("Non hai abbastanza cm per completare il coinflip.")
+            return
+
+        user['length'] -= bet
+        win = random.choice(["martello", "falce"])
+        msg = f"Hai scelto: {choice}\nÈ uscito: {win}\n"
+
+        if choice == win:
+            user['length'] += bet * 2
+            user['stats']['won'] += 1
+            msg += f"🎉 HAI VINTO! Guadagni: +{bet}cm"
+        else:
+            user['stats']['lost'] += 1
+            msg += f"😢 Hai perso {bet}cm."
+
+        user['stats']['bet_total'] += bet
+        del data['duels'][user_id]
+        save_data()
+
+        await query.edit_message_text(msg + f"\nZucchina attuale: {user['length']}cm")
+
+    except Exception as e:
+        logger.error(f"Errore nel coinflip callback: {e}")
+        await query.edit_message_text("Errore nel coinflip!")
+
 
 async def handle_duel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle duel callback"""
@@ -424,7 +427,8 @@ async def handle_duel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             if defender['length'] < challenger_bet:
                 await query.edit_message_text("Non hai abbastanza cm per accettare il duello!")
                 return
-
+            
+            challenger['length'] -= challenger_bet
             defender['length'] -= challenger_bet
             total_pot = challenger_bet + challenger_bet
 
@@ -541,6 +545,8 @@ def main():
     app.add_handler(CommandHandler('classifica', leaderboard))
     app.add_handler(CallbackQueryHandler(handle_duel_callback, pattern='^duel:'))
     app.add_handler(CallbackQueryHandler(handle_donation, pattern='^donate:'))
+    app.add_handler(CallbackQueryHandler(handle_coinflip_callback, pattern='^coinflip:'))
+
     
     # Add error handler
     app.add_error_handler(error_handler)
