@@ -1,5 +1,7 @@
 # Zucchini Telegram Bot Core
 # Fixed version with working commands and no group restrictions
+raise Exception("Force stop bot instance")
+
 import logging
 import random
 import time
@@ -82,14 +84,15 @@ def get_user(user_id):
         data['users'][user_id] = {
             "length": 20,
             "last_daily": 0,
-            "last_beg": 0,
+            "last_hourly": 0,
             "stats": {
                 "daily_used": 0,
                 "beg_used": 0,
                 "daily_collected": 0,
                 "begs": 0,
-                "length_won": 0,
-                "length_lost": 0,
+                "won": 0,           # Added for coinflip and duels
+                "lost": 0,          # Added for coinflip and duels
+                "bet_total": 0,
             },
         }
     return data['users'][user_id]
