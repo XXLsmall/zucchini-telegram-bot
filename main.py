@@ -19,6 +19,7 @@ load_dotenv()
 
 # === Configurations ===
 TOKEN = os.getenv('BOT_TOKEN')
+FIXED_GROUP_CHAT_ID = -4951349977
 if not TOKEN:
     raise ValueError("BOT_TOKEN environment variable is required")
 
@@ -108,12 +109,6 @@ def get_username(user):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command handler"""
     user = get_user(update.effective_user.id)
-    if update.effective_chat.type in ["group", "supergroup"]:
-        group_id = update.effective_chat.id
-        logger.info(f"GRUPPO REGISTRATO: chat_id = {group_id}")
-        data['lottery']['group_chat_id'] = group_id
-        save_data()
-
 
     logger.info(f"Group ID: {group_id}")
     logger.info(f"Message length: {len(message)}")
@@ -501,7 +496,7 @@ async def lottery_draw_loop():
             total_pot = sum(b['amount'] for b in bets.values())
             total_winning = sum(b['amount'] for b in winning_bets.values())
 
-            group_id = data['lottery'].get('group_chat_id')
+            group_id = FIXED_GROUP_CHAT_ID
             message = f"🎯 Numero estratto: {winning_number}\n\n"
 
             if winning_bets:
@@ -559,7 +554,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def post_init(app):
-    #asyncio.create_task(lottery_draw_loop())
+    asyncio.create_task(lottery_draw_loop())
     logger.info("Background lottery loop started.")
 
 # === Bot Setup ===
