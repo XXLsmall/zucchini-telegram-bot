@@ -86,11 +86,13 @@ def get_user(user_id):
             "last_hourly": 0,
             "stats": {
                 "daily_used": 0,
-                "beg_used": 0,
+                "hourly_used": 0,
                 "daily_collected": 0,
                 "begs": 0,
                 "won": 0,           # Added for coinflip and duels
-                "lost": 0,          # Added for coinflip and duels
+                "lost": 0,
+                "length_won": 0,
+                "length_lost": 0, # Added for coinflip and duels
                 "bet_total": 0,
             },
         }
@@ -508,7 +510,7 @@ async def lottery_draw_loop(app):
 
             group_id = FIXED_GROUP_CHAT_ID
             message = f"🎯 Numero estratto: {winning_number}\n\n"
-            #raise Exception("Force stop bot instance")
+            raise Exception("Force stop bot instance")
 
             logger.info(f"Arrivo anche qua")
 
