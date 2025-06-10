@@ -469,7 +469,7 @@ async def handle_donation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer("Funzione donazione non ancora implementata!")
 
 # === Background Lottery Thread ===
-async def lottery_draw_loop():
+async def lottery_draw_loop(application):
     logger.info("lottery_draw_loop is running")
     while True:
         try:
