@@ -107,6 +107,9 @@ def get_username(user):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command handler"""
     user = get_user(update.effective_user.id)
+    if update.effective_chat.type in ["group", "supergroup"]:
+    data['lottery']['group_chat_id'] = update.effective_chat.id
+    save_data()
     save_data()
     
     await update.message.reply_text(
@@ -275,7 +278,7 @@ async def superenalotto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if user_id in data['lottery']['bets']:
             own = data['lottery']['bets'][user_id]
-            msg += f"\nTe hai puntato: {own['amount']}cm sul numero {own['number']}, io consiglierei di puntare di più"
+            msg += f"\nTe hai puntato {own['amount']}cm sul numero {own['number']}, io consiglierei di puntare di più"
 
         remaining_sec = int(data['lottery']['end_time'] - now())
         hours = remaining_sec // 3600
@@ -306,6 +309,10 @@ async def schedina(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user['length'] -= amount
 
     with data_lock:
+        # Set end time if expired
+        if now() >= data['lottery'].get('end_time', 0):
+            data['lottery']['end_time'] = now() + LOTTERY_INTERVAL
+
         current_bet = data['lottery']['bets'].get(user_id)
         if current_bet:
             if current_bet['number'] != number:
@@ -314,6 +321,7 @@ async def schedina(update: Update, context: ContextTypes.DEFAULT_TYPE):
             current_bet['amount'] += amount
         else:
             data['lottery']['bets'][user_id] = {'number': number, 'amount': amount}
+
 
     save_data()
     await update.message.reply_text(f"✅ Hai fatto bene a puntare di più! Totale: {data['lottery']['bets'][user_id]['amount']}cm sul numero {number}")
@@ -360,7 +368,7 @@ async def handle_coinflip_callback(update: Update, context: ContextTypes.DEFAULT
         actor_id = str(query.from_user.id)
 
         if actor_id != user_id:
-            await query.edit_message_text("Non toccare porcodio, solo chi lo ha creato può giocare!")
+            await query.answer("Non toccare porcodio, solo chi lo ha creato può giocare!", show_alert=True)
             return
 
         bet_data = data['duels'].get(user_id)
@@ -425,7 +433,7 @@ async def handle_duel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 return
 
             if defender['length'] < challenger_bet:
-                await query.edit_message_text("Lo hai troppo piccolo per accettare il duello!")
+                await query.answer("Lo hai troppo piccolo per accettare il duello!", show_alert=True)
                 return
             
             challenger['length'] -= challenger_bet
@@ -455,11 +463,11 @@ async def handle_donation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer("Funzione donazione non ancora implementata!")
 
 # === Background Lottery Thread ===
-def lottery_draw_loop():
+async def lottery_draw_loop():
     """Background lottery system — executes every 6 hours"""
     while True:
         try:
-            time.sleep(60)  # Check every minute
+            time.sleep(30)  # Check every minute
 
             with data_lock:
                 current_time = now()
@@ -497,6 +505,38 @@ def lottery_draw_loop():
                     for uid, b in bets.items():
                         get_user(uid)['length'] += b['amount']
                         logger.info(f"Nessun vincitore. Rimborsati {b['amount']}cm a {uid}")
+
+                winners = []
+                losers = []
+
+                for uid, b in bets.items():
+                    user = get_user(uid)
+                    name = user.get("username", f"user_{uid}")
+                    if uid in winning_bets:
+                        amount = int(total_pot * (b['amount'] / total_winning))
+                        winners.append(f"- @{name} ha vinto {amount}cm")
+                    else:
+                        amount = b['amount']
+                        losers.append(f"- @{name} ha perso {amount}cm")
+
+                msg = f"🎯 Numero estratto: {winning_number}\n\n"
+
+                if winners:
+                    msg += "🏆 Vincitori:\n" + "\n".join(winners) + "\n\n"
+                else:
+                    msg += "😢 Nessun vincitore questa volta.\n\n"
+
+                if losers:
+                    msg += "❌ Perdenti:\n" + "\n".join(losers)
+
+                # Send to group
+                group_id = data['lottery'].get('group_chat_id')
+                if group_id:
+                    await application.bot.send_message(chat_id=group_id, text=msg)
+                else:
+                    logger.warning("Group chat ID non trovato per l'annuncio della lotteria.")
+
+
 
                 # Update lottery state
                 data['lottery']['history'].append(winning_number)
