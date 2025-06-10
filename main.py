@@ -24,7 +24,7 @@ if not TOKEN:
     raise ValueError("BOT_TOKEN environment variable is required")
 
 DATA_FILE = 'zucchini_data.json'
-LOTTERY_INTERVAL = 2 * 60  # 6 hours in seconds
+LOTTERY_INTERVAL = 1 * 45  # 6 hours in seconds
 
 # === Logging Setup ===
 logging.basicConfig(
@@ -536,12 +536,20 @@ async def lottery_draw_loop(app):
                 logger.info(f"E anche qua")
 
             else:
+                logger.info("Nessun vincitore - rimborso in corso")
                 with data_lock:
                     for uid, b in bets.items():
+                        logger.info(f"Rimborsando utente {uid} con {b['amount']}cm")
                         user = get_user(uid)
-                        user['length'] += b['amount']  # Refund
+                        if not user:
+                            logger.warning(f"Utente {uid} non trovato!")
+                            continue
+                        user['length'] += b['amount']
+                        logger.info(f"Nuova lunghezza per utente {uid}: {user['length']}")
+
                     message += "😢 Nessun vincitore. Puntate rimborsate."
-                    logger.info(f"Qua perché nessuno ha vinto")
+                    logger.info("Rimborso completato")
+
 
             save_data()
             logger.info("Inizio invio messaggio estrazione lotteria")
