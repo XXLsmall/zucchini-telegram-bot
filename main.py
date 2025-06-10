@@ -469,7 +469,7 @@ async def handle_donation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer("Funzione donazione non ancora implementata!")
 
 # === Background Lottery Thread ===
-async def lottery_draw_loop(application):
+async def lottery_draw_loop(app):
     logger.info("lottery_draw_loop is running")
     while True:
         try:
@@ -557,7 +557,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def post_init(app):
-    asyncio.create_task(lottery_draw_loop(application))
+    asyncio.create_task(lottery_draw_loop(app))
     logger.info("Background lottery loop started.")
 
 # === Bot Setup ===
