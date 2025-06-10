@@ -22,7 +22,7 @@ if not TOKEN:
     raise ValueError("BOT_TOKEN environment variable is required")
 
 DATA_FILE = 'zucchini_data.json'
-LOTTERY_INTERVAL = 6 * 60 * 60  # 6 hours in seconds
+LOTTERY_INTERVAL = 2 * 60  # 6 hours in seconds
 
 # === Logging Setup ===
 logging.basicConfig(
@@ -110,18 +110,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_data()
     
     await update.message.reply_text(
-        f"Benvenuto al bot delle zucchine! 🥒\n"
-        f"La tua zucchina attuale: {user['length']}cm\n\n"
+        f"Benvenuto al bot della ludopatia! 🎰\n"
+        f"Il tuo cazzone è lungo: {user['length']}cm\n\n"
         f"Comandi disponibili:\n"
         f"/classifica - Visualizza la classifica\n"
         f"/razione_giornaliera - Ottieni la tua razione giornaliera\n"
         f"/elemosina - Chiedi l'elemosina\n"
-        f"/coinflip [puntata] - Scommetti su testa o croce\n"
-        f"/duello_pisello [@utente] - Sfida un utente a duello\n"
-        f"/superenalotto [numero] [puntata] - Partecipa alla lotteria\n"
-        f"/schedina - Vedi la tua schedina del superenalotto\n"
-        f"/tessera_del_pane - Ritira il pane gratuito\n"
-        f"/grazie_mosca - Ringrazia per un favore ricevuto"
+        f"/coinflip [puntata] - Scommetti su falce o martello\n"
+        f"/duello_pisello [puntata] - Come il bot vecchio dioporco\n"
+        f"/superenalotto - Vedi i dati sulla lotteria\n"
+        f"/schedina [numero 1-10] [puntata] - Compra una schedina, puoi comprarne quante ne vuoi dello stesso numero\n"
+        f"/tessera_del_pane - Vedi quanto sei ludopatico\n"
     )
 
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -138,7 +137,7 @@ async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Nessun utente nella classifica!")
             return
             
-        msg = "🏆 Classifica Zucchine 🏆\n\n"
+        msg = "🎰 Classifica Ludopatici 🎰\n\n"
         for i, (uid, user_data) in enumerate(leaderboard_sorted, 1):
             try:
                 # Try to get user info from Telegram
@@ -165,22 +164,22 @@ async def razione_giornaliera(update: Update, context: ContextTypes.DEFAULT_TYPE
         hours = int(remaining // 3600)
         minutes = int((remaining % 3600) // 60)
         await update.message.reply_text(
-            f"Hai già ritirato la tua razione oggi! 🍞\n"
-            f"Prossima razione disponibile tra: {hours}h {minutes}m"
+            f"Hai già ritirato la tua razione oggi! 🤬\n"
+            f"Prossima razione disponibile tra: {hours} ore {minutes} minuti"
         )
         return
     
     # Give daily ration
-    bonus = random.randint(3, 8)
+    bonus = random.randint(5, 15)
     user['length'] += bonus
     user['last_daily'] = current_time
     user['stats']['daily_used'] += 1
     save_data()
     
     await update.message.reply_text(
-        f"Hai ritirato la tua razione giornaliera! 🍞\n"
-        f"Guadagno: +{bonus}cm\n"
-        f"Zucchina attuale: {user['length']}cm"
+        f"Hai ritirato la tua razione giornaliera! 🎲\n"
+        f"Hai ottenuto: +{bonus}cm\n"
+        f"Nerchia attuale: {user['length']}cm"
     )
 
 async def elemosina(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -193,8 +192,8 @@ async def elemosina(update: Update, context: ContextTypes.DEFAULT_TYPE):
         remaining = 60 * 60 - (current_time - user['last_hourly'])
         minutes = int(remaining // 60)
         await update.message.reply_text(
-            f"Hai già chiesto l'elemosina di recente! 🙏\n"
-            f"Riprova tra: {minutes} minuti"
+            f"Hai già chiesto l'elemosina ritardato! 🤡\n"
+            f"Riprova tra: {minutes} minuti se hai le palle"
         )
         return
     
@@ -206,9 +205,9 @@ async def elemosina(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_data()
 
     await update.message.reply_text(
-        f"Un gentile duce ti ha dato l'elemosina! 🪙\n"
-        f"Guadagno: +{bonus}cm\n"
-        f"Zucchina attuale: {user['length']}cm"
+        f"Il duce ti ha dato l'elemosina! 🙋🏻‍♂\n"
+        f"Ottieni +{bonus}cm\n"
+        f"Minchia attuale: {user['length']}cm"
     )
 
 
@@ -217,29 +216,29 @@ async def coinflip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
     if not context.args or not context.args[0].isdigit():
-        await update.message.reply_text("Uso: /coinflip [puntata in cm]")
+        await update.message.reply_text("Brutto ritardato, scrivi: /coinflip [puntata]")
         return
 
     bet = int(context.args[0])
     if bet <= 0 or bet > user['length']:
-        await update.message.reply_text(f"Puntata non valida. Hai {user['length']}cm.")
+        await update.message.reply_text(f"Puntata non valida. Hai solo {user['length']}cm sfigato.")
         return
 
     data['duels'][user_id] = {'bet': bet, 'type': 'coinflip'}
     save_data()
 
     keyboard = [
-        [InlineKeyboardButton("🪓 Martello", callback_data=f"coinflip:{user_id}:martello")],
-        [InlineKeyboardButton("🔨 Falce", callback_data=f"coinflip:{user_id}:falce")]
+        [InlineKeyboardButton("🚬 Cannetta", callback_data=f"coinflip:{user_id}:cannetta")],
+        [InlineKeyboardButton("💣 Cannone", callback_data=f"coinflip:{user_id}:cannone")]
     ]
     await update.message.reply_text(
-        f"Stai per giocare al coinflip con una puntata di {bet}cm!\nScegli un lato:",
+        f"Stai per giocare al coinflip {bet}cm!\nScegli:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def duello_pisello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args or not context.args[0].isdigit():
-        await update.message.reply_text("Uso: /duello_pisello [puntata in cm]")
+        await update.message.reply_text("Brutto ritardato, scrivi: /duello_pisello [puntata]")
         return
 
     bet = int(context.args[0])
@@ -247,22 +246,22 @@ async def duello_pisello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = get_user(user_id)
 
     if bet <= 0 or bet > user['length']:
-        await update.message.reply_text(f"Puntata non valida. Hai {user['length']}cm.")
+        await update.message.reply_text(f"Puntata invalida, come te. Hai {user['length']}cm.")
         return
 
     data['duels'][user_id] = {'bet': bet}
     save_data()
 
-    keyboard = [[InlineKeyboardButton("Attacca! ⚔️", callback_data=f"duel:accept:{user_id}")]]
+    keyboard = [[InlineKeyboardButton("Duello per l'onore ⚔️", callback_data=f"duel:accept:{user_id}")]]
     await update.message.reply_text(
         f"⚔️ {get_username(update.effective_user)} ha lanciato un duello da {bet}cm!\n"
-        f"Chiunque può cliccare su Attacca per partecipare. Il vincitore prende tutto!",
+        f"Vincere, e vinceremo!",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def superenalotto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    msg = "📊 SCOMMESSE ATTUALI 📊\n\n"
+    msg = "🎰 SCOMMESSE ATTUALI 🎰\n\n"
 
     with data_lock:
         active_bets = {}
@@ -272,16 +271,16 @@ async def superenalotto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         for num, entries in active_bets.items():
             total = sum(a for _, a in entries)
-            msg += f"{num}: {total}cm da {len(entries)} utenti\n"
+            msg += f"{num}: {total}cm da {len(entries)} fascisti\n"
 
         if user_id in data['lottery']['bets']:
             own = data['lottery']['bets'][user_id]
-            msg += f"\n🎯 Tua puntata: {own['amount']}cm sul numero {own['number']}"
+            msg += f"\nTe hai puntato: {own['amount']}cm sul numero {own['number']}, io consiglierei di puntare di più"
 
         remaining_sec = int(data['lottery']['end_time'] - now())
         hours = remaining_sec // 3600
         minutes = (remaining_sec % 3600) // 60
-        msg += f"\n⏰ Prossima estrazione tra: {hours}h {minutes}m"
+        msg += f"\n⏰ Prossima estrazione tra: {hours} ore {minutes} minuti"
 
     await update.message.reply_text(msg)
 
@@ -290,18 +289,18 @@ async def schedina(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = get_user(user_id)
 
     if len(context.args) != 2:
-        await update.message.reply_text("Uso: /schedina [numero 1-10] [puntata]")
+        await update.message.reply_text("Brutto ritardato, scrivi: /schedina [numero 1-10] [puntata]")
         return
 
     try:
         number = int(context.args[0])
         amount = int(context.args[1])
     except ValueError:
-        await update.message.reply_text("Inserisci numeri validi.")
+        await update.message.reply_text("Non sai contare?")
         return
 
     if not (1 <= number <= 10) or amount <= 0 or amount > user['length']:
-        await update.message.reply_text("Valori fuori range o cm insufficienti.")
+        await update.message.reply_text("O non sai contare o lo hai troppo piccolo, scommessa rifiutata coglione!")
         return
 
     user['length'] -= amount
@@ -310,14 +309,14 @@ async def schedina(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current_bet = data['lottery']['bets'].get(user_id)
         if current_bet:
             if current_bet['number'] != number:
-                await update.message.reply_text("Hai già scommesso su un altro numero!")
+                await update.message.reply_text("Hai già scommesso su un altro numero mongolo!")
                 return
             current_bet['amount'] += amount
         else:
             data['lottery']['bets'][user_id] = {'number': number, 'amount': amount}
 
     save_data()
-    await update.message.reply_text(f"✅ Puntata aggiornata! Totale: {data['lottery']['bets'][user_id]['amount']}cm su {number}")
+    await update.message.reply_text(f"✅ Hai fatto bene a puntare di più! Totale: {data['lottery']['bets'][user_id]['amount']}cm sul numero {number}")
 
 
 async def tessera_del_pane(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -326,9 +325,10 @@ async def tessera_del_pane(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hourly = user['stats'].get('hourly_used', 0)
 
     await update.message.reply_text(
-        f"📈 Tessera del Pane 📈\n"
+        f"💰 Tessera del Pane 💰\n"
         f"Razioni giornaliere ottenute: {daily} volte\n"
-        f"Elemosine ricevute: {hourly} volte"
+        f"Elemosine ricevute: {hourly} volte\n"
+        f"Dovresti essere più ludopatico"
     )
 
 
@@ -360,7 +360,7 @@ async def handle_coinflip_callback(update: Update, context: ContextTypes.DEFAULT
         actor_id = str(query.from_user.id)
 
         if actor_id != user_id:
-            await query.edit_message_text("Non puoi giocare il coinflip di un altro utente!")
+            await query.edit_message_text("Non toccare porcodio, solo chi lo ha creato può giocare!")
             return
 
         bet_data = data['duels'].get(user_id)
@@ -372,26 +372,26 @@ async def handle_coinflip_callback(update: Update, context: ContextTypes.DEFAULT
         bet = bet_data['bet']
 
         if user['length'] < bet:
-            await query.edit_message_text("Non hai abbastanza cm per completare il coinflip.")
+            await query.edit_message_text("Lo hai troppo piccolo per questo coinflip.")
             return
 
         user['length'] -= bet
-        win = random.choice(["martello", "falce"])
+        win = random.choice(["cannetta", "cannone"])
         msg = f"Hai scelto: {choice}\nÈ uscito: {win}\n"
 
         if choice == win:
             user['length'] += bet * 2
             user['stats']['won'] += 1
-            msg += f"🎉 HAI VINTO! Guadagni: +{bet}cm"
+            msg += f"💰 HAI VINTO! Guadagni: +{bet}cm, viva il duce"
         else:
             user['stats']['lost'] += 1
-            msg += f"😢 Hai perso {bet}cm."
+            msg += f"💸 Hai perso {bet}cm, sfigato."
 
         user['stats']['bet_total'] += bet
         del data['duels'][user_id]
         save_data()
 
-        await query.edit_message_text(msg + f"\nZucchina attuale: {user['length']}cm")
+        await query.edit_message_text(msg + f"\nOra il tuo cazzo è lungo {user['length']}cm")
 
     except Exception as e:
         logger.error(f"Errore nel coinflip callback: {e}")
@@ -408,7 +408,7 @@ async def handle_duel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         challenger_id = int(challenger_id)
         
         if query.from_user.id == challenger_id:
-            await query.edit_message_text("Non puoi accettare il tuo stesso duello!")
+            await query.edit_message_text("Non puoi accettare il tuo stesso duello ritardato!")
             return
         
         challenger = get_user(challenger_id)
@@ -425,7 +425,7 @@ async def handle_duel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 return
 
             if defender['length'] < challenger_bet:
-                await query.edit_message_text("Non hai abbastanza cm per accettare il duello!")
+                await query.edit_message_text("Lo hai troppo piccolo per accettare il duello!")
                 return
             
             challenger['length'] -= challenger_bet
@@ -435,21 +435,15 @@ async def handle_duel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             winner = random.choice(['challenger', 'defender'])
             if winner == 'challenger':
                 challenger['length'] += total_pot
-                result = f"{get_username(update.effective_user)} ha perso!\nIl vincitore prende {total_pot}cm!"
+                result = f"{get_username(update.effective_user)} ha corso un rischio ed è stato premiato!\nHa vinto {total_pot}cm!"
             else:
                 defender['length'] += total_pot
-                result = f"{get_username(query.from_user)} ha vinto il duello!\nPremio: {total_pot}cm!"
+                result = f"{get_username(query.from_user)} ha le palle, e sono esplose in faccia all'avversario!\nIn cambio vince {total_pot}cm!"
 
             del data['duels'][str(challenger_id)]
             save_data()
             await query.edit_message_text(result)
 
-            
-        elif action == "decline":
-            await query.edit_message_text(
-                f"🚫 DUELLO RIFIUTATO!\n"
-                f"Il difensore ha rifiutato la sfida."
-            )
             
     except Exception as e:
         logger.error(f"Error in duel callback: {e}")
