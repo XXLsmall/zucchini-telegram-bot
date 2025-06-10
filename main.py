@@ -557,7 +557,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def post_init(app):
-    asyncio.create_task(lottery_draw_loop())
+    asyncio.create_task(lottery_draw_loop(application))
     logger.info("Background lottery loop started.")
 
 # === Bot Setup ===
