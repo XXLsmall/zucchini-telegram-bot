@@ -561,15 +561,13 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # === Bot Setup ===
 def main():
     """Main function to run the bot"""
+    # Start lottery thread
+    lottery_thread = threading.Thread(target=lottery_draw_loop, daemon=True)
+    lottery_thread.start()
+    asyncio.create_task(lottery_draw_loop())
     
     # Build application
     app = ApplicationBuilder().token(TOKEN).build()
-
-    # Start lottery thread
-    loop = asyncio.get_event_loop()
-    loop.create_task(lottery_draw_loop())
-
-    app.run_polling()
     
     # Add handlers - REMOVED GROUP FILTERS
     app.add_handler(CommandHandler('start', start))
@@ -591,6 +589,7 @@ def main():
     app.add_error_handler(error_handler)
     
     logger.info("Bot started successfully")
+    app.run_polling()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
